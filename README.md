@@ -10,9 +10,9 @@ USER_ID       int
 MESSAGE       string
 ```
 
-- GET /danmaku?video_id=<<VIDEO_ID>>&uid=<<USER_ID>>
+- GET /danmaku?video_id=[VIDEO_ID]&uid=[USER_ID]
 
-- POST /pub_danmaku?video_id=<<VIDEO_ID>>&uid=<<USER_ID>>&msg=<<MESSAGE>>
+- POST /pub_danmaku?video_id=[VIDEO_ID]&uid=[USER_ID]&msg=[MESSAGE]
 
-- POST /danmaku/like?video_id=<<VIDEO_ID>>&uid=<<USER_ID>>
+- POST /danmaku/like?video_id=[VIDEO_ID]&uid=[USER_ID]
 
