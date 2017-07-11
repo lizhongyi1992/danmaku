@@ -11,14 +11,15 @@ MSG       String
 
 DANMAKU   Object
 {
-  userno    Int
-  avatar    String
-  nickname  String
-  type      Int
-  heat      Int     // sort by heat, heat=like-dislike
-  pub_at    Int
-  date      Int     // unix timestamp
-  comment   String
+  userno    Int     // publish user
+  avatar    String  // avatar url
+  nickname  String  
+  type      Int     // this field use by client side define
+  heat      Int     // sort by heat, heat=max(like-dislike,0)
+  pub_at    Int     // offset from video begin(0s)
+  action    Int     // 0=None 1=like 2=dislike
+  date      Int     // unix timestamp
+  comment   String  // danmaku info
 }
 ```
 
