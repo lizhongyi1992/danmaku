@@ -15,7 +15,7 @@ DANMAKU   Object
   avatar    String
   nickname  String
   type      Int
-  heat      Int
+  heat      Int     // sort by heat, heat=like-dislike
   pub_at    Int
   date      Int     // unix timestamp
   comment   String
