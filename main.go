@@ -44,7 +44,5 @@ func main() {
 	_log("quit when catch signal:", s)
 
 	app.Stop()
-	syncer.Stop()
 	_log("waiting for syncer exit")
-	<-syncer.StopChan()
 }

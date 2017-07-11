@@ -1,6 +1,10 @@
 package main
 
-import "io/ioutil"
+import (
+	"io/ioutil"
+
+	yaml "gopkg.in/yaml.v2"
+)
 
 type Config struct {
 	ListenAt string
