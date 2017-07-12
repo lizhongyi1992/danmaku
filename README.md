@@ -5,11 +5,12 @@
 ```
 type define:
 
-VIDEO_ID  Int
-UID       Int
-MSG       String
+video_id  Int
+uid       Int
+curr_uid  Int
+comment   String
 
-DANMAKU   Object
+Danmaku   Object
 {
   userno    Int     // publish user
   avatar    String  // avatar url
@@ -23,25 +24,25 @@ DANMAKU   Object
 }
 ```
 
-- GET /danmaku/all?video_id=[VIDEO_ID]&uid=[UID]
+- GET /danmaku/all?video_id=&curr_uid=
 
-success: 200 List{DANMAKU[]}
+success: 200 List{Danmaku[]}
 
 failure: 400 error_string
 
-- POST /danmaku/pub?video_id=[VIDEO_ID]&uid=[UID]&msg=[MSG]
+- POST /danmaku/pub?video_id=&uid=&comment=&avatar=&nickname=&type=&offset=&date=
 
 success: 200
 
 failure: 400
 
-- POST /danmaku/like?video_id=[VIDEO_ID]&uid=[UID]
+- POST /danmaku/like?video_id=&uid=
 
 success: 200
 
 failure: 400
 
-- POST /danmaku/dislike?video_id=[VIDEO_ID]&uid=[UID]
+- POST /danmaku/dislike?video_id=&uid=
 
 success: 200
 
