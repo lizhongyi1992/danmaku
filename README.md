@@ -17,7 +17,7 @@ Danmaku   Object
   nickname  String  
   type      Int     // this field use by client side define
   heat      Int     // sort by heat, heat=max(like-dislike,0)
-  offset     Int     // offset from video begin(0s)
+  offset    Int     // offset from video begin(0s)
   action    Int     // 0=None 1=like 2=dislike
   date      Int     // unix timestamp
   comment   String  // danmaku info

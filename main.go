@@ -37,12 +37,16 @@ func main() {
 	app := NewApp(config)
 
 	r.GET("/ping", ping_test)
-	r.POST("/danmaku/all", app.danmaku_all)
+	r.GET("/danmaku/all", app.danmaku_all)
+	r.POST("danmaku/pub", app.danmaku_pub)
+	r.POST("danmaku/like", app.danmaku_like)
+	r.POST("danmaku/dislike", app.danmaku_dislike)
+
 	go r.Run(config.ListenAt)
 
 	s := <-waiting_for_interrupt_chan()
 	_log("quit when catch signal:", s)
 
 	app.Stop()
-	_log("waiting for syncer exit")
+	_log("waiting for app exit")
 }
