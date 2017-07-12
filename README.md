@@ -36,13 +36,13 @@ success: 200
 
 failure: 400
 
-- POST /danmaku/like?video_id=&uid=
+- POST /danmaku/like?video_id=&uid=&danmakuid=
 
 success: 200
 
 failure: 400
 
-- POST /danmaku/dislike?video_id=&uid=
+- POST /danmaku/dislike?video_id=&uid=&danmakuid=
 
 success: 200
 
