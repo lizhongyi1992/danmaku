@@ -33,10 +33,10 @@ func (p *TimerTask) Start() {
 			p.f()
 		}
 	}
+	close(p.stopchan)
 }
 
 func (p *TimerTask) Stop() {
-	close(p.stopchan)
 	p.running = false
 }
 
