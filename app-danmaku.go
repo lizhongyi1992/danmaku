@@ -19,10 +19,16 @@ type App struct {
 	syncer_pub     syncer.RedisMysqlSyncer
 	syncer_like    syncer.RedisMysqlSyncer
 	syncer_dislike syncer.RedisMysqlSyncer
+
+	datasource struct {
+		pool *redis.Pool
+		db   *sql.DB
+	}
 }
 
 func NewApp(config Config) (*App, error) {
 	_log(config)
+	var e error
 	app := &App{config: config}
 
 	redis_connect := func() (*redis.Pool, error) {
@@ -40,6 +46,10 @@ func NewApp(config Config) (*App, error) {
 			Dial:        func() (redis.Conn, error) { return redis.Dial(network, address) },
 		}, nil
 	}
+	app.datasource.pool, e = redis_connect()
+	if e != nil {
+		return nil, e
+	}
 
 	mysql_connect := func() (*sql.DB, error) {
 		dsn := config.Syncer.MysqlUser + ":" + config.Syncer.MysqlPassword + "@tcp(" + config.Syncer.MysqlAddress + ")/"
@@ -56,9 +66,13 @@ func NewApp(config Config) (*App, error) {
 		}
 		return db, nil
 	}
+	app.datasource.db, e = mysql_connect()
+	if e != nil {
+		return nil, e
+	}
 
 	app.syncer_pub = syncer.NewRedisMysqlSyncer(syncer.RedisMysqlSyncerOption{})
-	e := app.syncer_pub.Init(redis_connect, mysql_connect)
+	e = app.syncer_pub.Init(redis_connect, mysql_connect)
 	if e != nil {
 		return nil, e
 	}
@@ -88,6 +102,60 @@ func (p *App) WaitForExit() {
 }
 
 func (p *App) danmaku_all(c *gin.Context) {
+	var video_id, uid int
+	video_id, _ = strconv.Atoi(c.Query("video_id"))
+	uid, _ = strconv.Atoi(c.Query("uid"))
+	_dbg(video_id, uid, c.Request.URL.RawQuery)
+
+	table := p.config.Syncer.MysqlTable
+	sqlstr := "select * from " + table + " where videoid=" + fmt.Sprint(video_id)
+	_dbg(sqlstr)
+	rows, e := p.datasource.db.Query(sqlstr)
+	if e != nil {
+		_err(e)
+		c.Status(400)
+		return
+	}
+	defer rows.Close()
+
+	l := []DanmakuRecord{}
+	for rows.Next() {
+		var DanmakuID int
+		var VideoID int
+		var Userno int
+		var Avatar string
+		var Nickname string
+		var Type int
+		var Heat int
+		var Offset int
+		var Action int
+		var Date []byte
+		var Comment string
+
+		e := rows.Scan(&DanmakuID, &Userno, &VideoID, &Type, &Heat, &Action, &Offset, &Date, &Nickname, &Avatar, &Comment)
+		t, e := time.Parse("2006-01-02 15:04:05", string(Date))
+		if e != nil {
+			_err(e)
+			c.Status(400)
+			return
+		}
+		record := DanmakuRecord{
+			DanmakuID: DanmakuID,
+			VideoID:   VideoID,
+			Userno:    Userno,
+			Avatar:    Avatar,
+			Nickname:  Nickname,
+			Type:      Type,
+			Heat:      Heat,
+			Offset:    Offset,
+			Action:    Action,
+			Timestamp: t.Unix(),
+			Comment:   Comment,
+		}
+		l = append(l, record)
+	}
+	_dbg(e, l)
+
 }
 
 func (p *App) danmaku_pub(c *gin.Context) {
@@ -143,7 +211,7 @@ func (p *App) danmaku_dislike(c *gin.Context) {
 	})
 }
 
-//
+// pub
 func (p *App) write_danmaku_to_redis(record DanmakuRecord, conn redis.Conn) {
 	s, e := json.Marshal(record)
 	_dbg(string(s), e)
@@ -194,7 +262,7 @@ func (p *App) insert_danmaku_to_mysql(conn redis.Conn, db *sql.DB) {
 	if e != nil {
 		_err(e)
 	}
-	sqlstr := "insert into " + p.config.Syncer.MysqlTable + " (uid,type,heat,action,offset,date,nickname,avatar,comment) values (?,?,?,?,?,from_unixtime(?),?,?,?);"
+	sqlstr := "insert into " + p.config.Syncer.MysqlTable + " (uid,videoid,type,heat,action,offset,date,nickname,avatar,comment) values (?,?,?,?,?,?,from_unixtime(?),?,?,?);"
 	_dbg(sqlstr)
 	for _, v := range toupdate {
 		var r DanmakuRecord
@@ -203,7 +271,7 @@ func (p *App) insert_danmaku_to_mysql(conn redis.Conn, db *sql.DB) {
 			_err(e)
 			continue
 		}
-		_, e = tx.Exec(sqlstr, r.Userno, r.Type, r.Heat, r.Action, r.Offset, r.Timestamp, r.Nickname, r.Avatar, r.Comment)
+		_, e = tx.Exec(sqlstr, r.Userno, r.VideoID, r.Type, r.Heat, r.Action, r.Offset, r.Timestamp, r.Nickname, r.Avatar, r.Comment)
 		if e != nil {
 			_err(e)
 		}
@@ -216,3 +284,5 @@ func (p *App) insert_danmaku_to_mysql(conn redis.Conn, db *sql.DB) {
 
 	conn.Do("del", name)
 }
+
+// get video all

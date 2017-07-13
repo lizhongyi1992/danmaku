@@ -1,6 +1,7 @@
 package main
 
 type DanmakuRecord struct {
+	DanmakuID int
 	VideoID   int
 	Userno    int
 	Avatar    string
