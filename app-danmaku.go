@@ -155,7 +155,13 @@ func (p *App) danmaku_all(c *gin.Context) {
 		l = append(l, record)
 	}
 	_dbg(e, l)
+	b, e := json.Marshal(l)
+	if e != nil {
+		c.Status(400)
+		return
+	}
 
+	c.String(200, string(b))
 }
 
 func (p *App) danmaku_pub(c *gin.Context) {
