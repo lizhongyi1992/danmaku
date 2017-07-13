@@ -16,11 +16,15 @@ type syncer_config struct {
 	MysqlAddress  string
 	MysqlUser     string
 	MysqlPassword string
+	MysqlTable    string
 
 	RedisAddress  string
 	RedisPassword string
 
 	FlushIntervalSecond int
+	RedisShuffleSuffix  string
+
+	PubDanmakuListName string
 }
 
 type accumulator_config struct {
@@ -59,6 +63,18 @@ func default_config() Config {
 			MysqlKey:               "no",
 			FlushIntervalSecond:    2,
 			MaxKeyCached:           1000,
+		},
+		Syncer: syncer_config{
+			RedisAddress:        "localhost:6379",
+			RedisPassword:       "",
+			MysqlUser:           "root",
+			MysqlPassword:       "root",
+			MysqlAddress:        "localhost:3306",
+			MysqlTable:          "test.tdanmaku",
+			FlushIntervalSecond: 2,
+
+			RedisShuffleSuffix: "inprogress",
+			PubDanmakuListName: "pub_danmaku",
 		},
 	}
 	return c

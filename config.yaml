@@ -15,4 +15,14 @@ videoacc:
   maxkeycached: 1000
   writedbtimeout: 0
   failretrytimes: 0
+syncer:
+  mysqladdress: localhost:3306
+  mysqluser: root
+  mysqlpassword: root
+  mysqltable: test.tdanmaku
+  redisaddress: localhost:6379
+  redispassword: ""
+  flushintervalsecond: 2
+  redisshufflesuffix: inprogress
+  pubdanmakulistname: pub_danmaku
 

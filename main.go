@@ -36,6 +36,7 @@ func main() {
 
 	app, e := NewApp(config)
 	_exit_if(e)
+	go app.Run()
 
 	r.GET("/ping", ping_test)
 	r.GET("/danmaku/all", app.danmaku_all)
@@ -50,4 +51,5 @@ func main() {
 
 	app.Stop()
 	_log("waiting for app exit")
+	app.WaitForExit()
 }

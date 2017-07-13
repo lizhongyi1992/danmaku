@@ -25,14 +25,14 @@ type RedisMysqlSyncer interface {
 	Syncer
 	Init(func() (*redis.Pool, error), func() (*sql.DB, error)) error
 	SyncRedis(func(redis.Conn))
-	SetSyncMysqlHandle(func(redis.Conn, *sql.DB))
+	SetSyncMysqlHandle(int, func(redis.Conn, *sql.DB))
 }
 
 type RedisMysqlSyncerOption struct {
 }
 
 func NewRedisMysqlSyncer(opt RedisMysqlSyncerOption) RedisMysqlSyncer {
-	return nil
+	return &redis_mysql_syncer{stopchan: make(chan struct{})}
 }
 
 func (p *redis_mysql_syncer) Run() {
