@@ -1,3 +1,3 @@
 tdanmaku
 
-create table if not exists test.tdanmaku(id int not null auto_increment primary key, uid int,videoid int,type int, heat int,action int, offset int,date datetime ,nickname varchar(128),avatar text,comment text) default charset=utf8;
+create table if not exists test.tdanmaku(id int not null auto_increment primary key, uid int,video_id int,type int, heat int,action int, offset int,date datetime ,nickname varchar(128),avatar text,comment text) default charset=utf8;

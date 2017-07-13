@@ -1,8 +1,8 @@
 package main
 
 type DanmakuRecord struct {
-	DanmakuID int    `json:"danmakuid"`
-	VideoID   int    `json:"videoid"`
+	DanmakuID int    `json:"danmaku_id"`
+	VideoID   int    `json:"video_id"`
 	Userno    int    `json:"userno"`
 	Avatar    string `json:"avatar"`
 	Nickname  string `json:"nickname"`

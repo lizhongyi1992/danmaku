@@ -155,6 +155,9 @@ func (p *App) danmaku_all(c *gin.Context) {
 		l = append(l, record)
 	}
 	_dbg(e, l)
+
+	// sort by heat ?
+
 	b, e := json.Marshal(l)
 	if e != nil {
 		c.Status(400)
@@ -200,16 +203,18 @@ func (p *App) danmaku_pub(c *gin.Context) {
 }
 
 func (p *App) danmaku_like(c *gin.Context) {
-	var danmakuid, uid, videoid string
+	return
+	_log(c.Request.URL.RawQuery)
 	var like_hset_name string
-	key := join_string_by("_", videoid, uid, danmakuid)
-	p.syncer_like.SyncRedis(func(conn redis.Conn) {
-		_, e := conn.Do("hincrby", like_hset_name, key, 1)
-		if e != nil {
-			_err(e)
-			return
-		}
-	})
+
+	video_id, uid, danmaku_id := c.Query("video_id"), c.Query("uid"), c.Query("danmaku_id")
+
+	key := join_string_by("_", video_id, uid, danmaku_id)
+	_, e := p.datasource.pool.Get().Do("hincrby", like_hset_name, key, 1)
+	if e != nil {
+		_err(e)
+		return
+	}
 }
 
 func (p *App) danmaku_dislike(c *gin.Context) {
