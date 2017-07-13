@@ -14,10 +14,16 @@ type Syncer interface {
 }
 
 type redis_mysql_syncer struct {
+	pool     *redis.Pool
+	db       *sql.DB
+	f        func(redis.Conn, *sql.DB)
+	task     *TimerTask
+	stopchan chan struct{}
 }
 
 type RedisMysqlSyncer interface {
 	Syncer
+	Init(func() (*redis.Pool, error), func() (*sql.DB, error)) error
 	SyncRedis(func(redis.Conn))
 	SetSyncMysqlHandle(func(redis.Conn, *sql.DB))
 }
@@ -30,21 +36,40 @@ func NewRedisMysqlSyncer(opt RedisMysqlSyncerOption) RedisMysqlSyncer {
 }
 
 func (p *redis_mysql_syncer) Run() {
-
+	go p.task.Start()
+	<-p.task.StopChan()
+	close(p.stopchan)
 }
 
 func (p *redis_mysql_syncer) Stop() {
-
+	p.task.Stop()
 }
 
-func (p *redis_mysql_syncer) StopChan() {
+func (p *redis_mysql_syncer) StopChan() chan struct{} {
+	return p.stopchan
+}
 
+func (p *redis_mysql_syncer) Init(redis_connect func() (*redis.Pool, error), mysql_connect func() (*sql.DB, error)) error {
+	var e error
+	p.pool, e = redis_connect()
+	if e != nil {
+		return e
+	}
+
+	p.db, e = mysql_connect()
+	if e != nil {
+		return e
+	}
+	return nil
 }
 
 func (p *redis_mysql_syncer) SyncRedis(f func(redis.Conn)) {
-
+	f(p.pool.Get())
 }
 
-func (p *redis_mysql_syncer) SetSyncMysqlHandle(f func(redis.Conn, *sql.DB)) {
-
+func (p *redis_mysql_syncer) SetSyncMysqlHandle(second int, f func(redis.Conn, *sql.DB)) {
+	p.f = f
+	p.task = NewTimerTask(second, func() {
+		p.f(p.pool.Get(), p.db)
+	})
 }

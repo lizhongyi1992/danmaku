@@ -9,6 +9,18 @@ import (
 type Config struct {
 	ListenAt string
 	VideoAcc accumulator_config
+	Syncer   syncer_config
+}
+
+type syncer_config struct {
+	MysqlAddress  string
+	MysqlUser     string
+	MysqlPassword string
+
+	RedisAddress  string
+	RedisPassword string
+
+	FlushIntervalSecond int
 }
 
 type accumulator_config struct {

@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"path"
 	"runtime"
+	"strings"
 	"syscall"
 
 	"github.com/gin-gonic/gin"
@@ -68,4 +69,8 @@ func version_string() string {
 
 func ping_test(c *gin.Context) {
 	c.String(200, "ok")
+}
+
+func join_string_by(sep string, v ...string) string {
+	return strings.Join(v, sep)
 }

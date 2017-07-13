@@ -34,7 +34,8 @@ func main() {
 
 	r := gin.Default()
 
-	app := NewApp(config)
+	app, e := NewApp(config)
+	_exit_if(e)
 
 	r.GET("/ping", ping_test)
 	r.GET("/danmaku/all", app.danmaku_all)
