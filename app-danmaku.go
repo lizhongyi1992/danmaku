@@ -16,9 +16,8 @@ import (
 type App struct {
 	config Config
 
-	syncer_pub     syncer.RedisMysqlSyncer
-	syncer_like    syncer.RedisMysqlSyncer
-	syncer_dislike syncer.RedisMysqlSyncer
+	syncer_pub  syncer.RedisMysqlSyncer
+	syncer_like syncer.RedisMysqlSyncer
 
 	datasource struct {
 		pool *redis.Pool
@@ -92,13 +91,11 @@ func (p *App) Run() {
 func (p *App) Stop() {
 	p.syncer_pub.Stop()
 	//p.syncer_like.Stop()
-	//p.syncer_dislike.Stop()
 }
 
 func (p *App) WaitForExit() {
 	<-p.syncer_pub.StopChan()
 	//<-p.syncer_like.StopChan()
-	//<-p.syncer_dislike.StopChan()
 }
 
 func (p *App) danmaku_all(c *gin.Context) {
@@ -156,7 +153,7 @@ func (p *App) danmaku_all(c *gin.Context) {
 	}
 	_dbg(e, l)
 
-	// sort by heat ?
+	// TODO:sort by heat
 
 	b, e := json.Marshal(l)
 	if e != nil {

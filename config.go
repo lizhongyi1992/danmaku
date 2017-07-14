@@ -24,7 +24,8 @@ type syncer_config struct {
 	FlushIntervalSecond int
 	RedisShuffleSuffix  string
 
-	PubDanmakuListName string
+	PubDanmakuListName  string
+	LikeDanmakuHsetName string
 }
 
 type accumulator_config struct {
@@ -73,8 +74,9 @@ func default_config() Config {
 			MysqlTable:          "test.tdanmaku",
 			FlushIntervalSecond: 2,
 
-			RedisShuffleSuffix: "inprogress",
-			PubDanmakuListName: "pub_danmaku",
+			RedisShuffleSuffix:  "inprogress",
+			PubDanmakuListName:  "pub_danmaku_delta",
+			LikeDanmakuHsetName: "like_danmaku_delta",
 		},
 	}
 	return c
