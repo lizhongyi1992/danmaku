@@ -4,6 +4,7 @@ import (
 	"danmaku/syncer"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -372,5 +373,72 @@ func (p *App) insert_danmaku_to_mysql(conn redis.Conn, db *sql.DB) {
 
 // like / dislike
 func (p *App) update_danmaku_like_dislike_to_mysql(conn redis.Conn, db *sql.DB) {
-	_dbg(1)
+
+	get_count := func(old_hash string) map[int]int {
+		new_hash := join_string_by("_", old_hash, p.config.Syncer.RedisShuffleSuffix, fmt.Sprint(os.Getpid()), fmt.Sprint(time.Now().Unix()))
+		if !redis_key_exsits(old_hash, conn) {
+			return nil
+		}
+		_, e := conn.Do("rename", old_hash, new_hash)
+		if e != nil {
+			_err(e)
+			return nil
+		}
+
+		reply, e := conn.Do("hkeys", new_hash)
+		if e != nil {
+			_err(e)
+			return nil
+		}
+
+		bytes, ok := reply.([]interface{})
+		if !ok {
+			return nil
+		}
+
+		video_ids := map[int]int{}
+		get := func(sk string) (k int, v int, e error) {
+			var sv string
+			r, e := conn.Do("hget", new_hash, sk)
+			if e != nil {
+				return 0, 0, e
+			}
+			switch t := r.(type) {
+			case []byte:
+				sv = string(t)
+			case nil:
+				return 0, 0, errors.New("not exists")
+			}
+			k, e = strconv.Atoi(sk)
+			if e != nil {
+				return 0, 0, e
+			}
+			v, e = strconv.Atoi(sv)
+			if e != nil {
+				return 0, 0, e
+			}
+			return k, v, nil
+		}
+
+		for _, v := range bytes {
+			video_id, count, e := get(string(v.([]byte)))
+			if e != nil {
+				_err(e)
+				continue
+			}
+			video_ids[video_id] = count
+		}
+		_dbg(video_ids)
+		conn.Do("del", old_hash)
+		return video_ids
+	}
+
+	update_likes := get_count(p.config.Syncer.LikeDanmakuHashName)
+	update_dislikes := get_count(p.config.Syncer.DislikeDanmakuHashName)
+
+	if update_likes == nil && update_dislikes == nil {
+		return
+	}
+
+	// update mysql
 }
