@@ -191,7 +191,7 @@ func (p *App) danmaku_all(c *gin.Context) {
 	}
 	_dbg(e, l)
 
-	// TODO:sort by heat
+	// sort by heat
 	sort.Slice(l, func(i, j int) bool {
 		return l[i].Heat < l[j].Heat
 	})
