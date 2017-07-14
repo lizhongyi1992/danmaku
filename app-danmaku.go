@@ -159,7 +159,7 @@ func (p *App) danmaku_all(c *gin.Context) {
 		user_hash := p.config.Syncer.UserLikesDanmakuHash
 		key := join_string_by("_", fmt.Sprint(uid), fmt.Sprint(VideoID), fmt.Sprint(DanmakuID))
 		reply, e := conn.Do("hget", user_hash, key)
-		_err(key, reply, e)
+		_dbg(key, reply, e)
 		if e == nil {
 			if action, ok := reply.([]byte); ok {
 				switch string(action) {
@@ -397,7 +397,7 @@ func (p *App) update_danmaku_like_dislike_to_mysql(conn redis.Conn, db *sql.DB) 
 		}
 
 		video_ids := map[int]int{}
-		get := func(sk string) (k int, v int, e error) {
+		get_videoid_and_counts := func(sk string) (k int, v int, e error) {
 			var sv string
 			r, e := conn.Do("hget", new_hash, sk)
 			if e != nil {
@@ -421,7 +421,7 @@ func (p *App) update_danmaku_like_dislike_to_mysql(conn redis.Conn, db *sql.DB) 
 		}
 
 		for _, v := range bytes {
-			video_id, count, e := get(string(v.([]byte)))
+			video_id, count, e := get_videoid_and_counts(string(v.([]byte)))
 			if e != nil {
 				_err(e)
 				continue
@@ -429,16 +429,41 @@ func (p *App) update_danmaku_like_dislike_to_mysql(conn redis.Conn, db *sql.DB) 
 			video_ids[video_id] = count
 		}
 		_dbg(video_ids)
-		conn.Do("del", old_hash)
+		conn.Do("del", new_hash)
 		return video_ids
 	}
 
 	update_likes := get_count(p.config.Syncer.LikeDanmakuHashName)
 	update_dislikes := get_count(p.config.Syncer.DislikeDanmakuHashName)
-
 	if update_likes == nil && update_dislikes == nil {
 		return
 	}
 
 	// update mysql
+	sqlstr := "update " + p.config.Syncer.MysqlTable + " set likes=likes+(?),dislikes=dislikes+(?),heat=(likes-dislikes) where id=?;"
+	_dbg(sqlstr)
+
+	tx, e := db.Begin()
+	if e != nil {
+		_err(e)
+	}
+
+	for video_id, likes := range update_likes {
+		_, e := tx.Exec(sqlstr, likes, 0, video_id)
+		if e != nil {
+			_err(e)
+		}
+	}
+	for video_id, dislikes := range update_dislikes {
+		_, e := tx.Exec(sqlstr, 0, dislikes, video_id)
+		if e != nil {
+			_err(e)
+		}
+	}
+
+	e = tx.Commit()
+	if e != nil {
+		_err(e)
+	}
+
 }
