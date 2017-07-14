@@ -97,6 +97,7 @@ func NewApp(config Config) (*App, error) {
 
 func (p *App) Run() {
 	go p.syncer_pub.Run()
+	go p.syncer_like_dislike.Run()
 }
 
 func (p *App) Stop() {
@@ -105,8 +106,11 @@ func (p *App) Stop() {
 }
 
 func (p *App) WaitForExit() {
+	_dbg("wait exit..")
 	<-p.syncer_pub.StopChan()
+	_dbg("syncer_pub exit..")
 	<-p.syncer_like_dislike.StopChan()
+	_dbg("syncer_like_dislike exit..")
 }
 
 func (p *App) danmaku_all(c *gin.Context) {
@@ -175,7 +179,7 @@ func (p *App) danmaku_all(c *gin.Context) {
 			Type:      Type,
 			Likes:     Likes,
 			Dislikes:  Dislikes,
-			Heat:      Heat,
+			Heat:      max(0, Heat),
 			Offset:    Offset,
 			Action:    Action,
 			Timestamp: t.Unix(),
@@ -272,9 +276,9 @@ func (p *App) danmaku_dislike(c *gin.Context) {
 
 	p.syncer_like_dislike.SyncRedis(func(conn redis.Conn) {
 		func() {
-			like_hash := p.config.Syncer.LikeDanmakuHashName
+			like_hash := p.config.Syncer.DislikeDanmakuHashName
 			key := danmaku_id
-			_, e := conn.Do("hincrby", like_hash, key, -1) // *decr*
+			_, e := conn.Do("hincrby", like_hash, key, 1)
 			if e != nil {
 				_err(e)
 			}
@@ -368,4 +372,5 @@ func (p *App) insert_danmaku_to_mysql(conn redis.Conn, db *sql.DB) {
 
 // like / dislike
 func (p *App) update_danmaku_like_dislike_to_mysql(conn redis.Conn, db *sql.DB) {
+	_dbg(1)
 }

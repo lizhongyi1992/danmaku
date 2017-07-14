@@ -8,7 +8,6 @@ import (
 
 type Config struct {
 	ListenAt string
-	VideoAcc accumulator_config
 	Syncer   syncer_config
 }
 
@@ -24,48 +23,15 @@ type syncer_config struct {
 	FlushIntervalSecond int
 	RedisShuffleSuffix  string
 
-	PubDanmakuListName   string
-	LikeDanmakuHashName  string
-	UserLikesDanmakuHash string
-}
-
-type accumulator_config struct {
-	RedisAddress           string
-	RedisPassword          string
-	RedisHashSetName       string
-	RedisHashShuffleSuffix string
-
-	MysqlAddress  string
-	MysqlUser     string
-	MysqlPassword string
-	MysqlDB       string
-	MysqlTable    string
-	MysqlField    string
-	MysqlKey      string
-
-	FlushIntervalSecond int
-	MaxKeyCached        int
-
-	WriteDBTimeout int
-	FailRetryTimes int
+	PubDanmakuListName     string
+	LikeDanmakuHashName    string
+	DislikeDanmakuHashName string
+	UserLikesDanmakuHash   string
 }
 
 func default_config() Config {
 	c := Config{
 		ListenAt: ":8888",
-		VideoAcc: accumulator_config{
-			RedisAddress:           "localhost:6379",
-			RedisHashSetName:       "acc_views",
-			RedisHashShuffleSuffix: "_inprogress",
-			MysqlUser:              "root",
-			MysqlPassword:          "root",
-			MysqlAddress:           "localhost:3306",
-			MysqlTable:             "test.tshare",
-			MysqlField:             "playtimes",
-			MysqlKey:               "no",
-			FlushIntervalSecond:    2,
-			MaxKeyCached:           1000,
-		},
 		Syncer: syncer_config{
 			RedisAddress:        "localhost:6379",
 			RedisPassword:       "",
@@ -75,10 +41,11 @@ func default_config() Config {
 			MysqlTable:          "test.tdanmaku",
 			FlushIntervalSecond: 2,
 
-			RedisShuffleSuffix:   "inprogress",
-			PubDanmakuListName:   "pub_danmaku_delta",
-			LikeDanmakuHashName:  "like_danmaku_delta",
-			UserLikesDanmakuHash: "user_likes_danmaku",
+			RedisShuffleSuffix:     "inprogress",
+			PubDanmakuListName:     "pub_danmaku_delta",
+			LikeDanmakuHashName:    "like_danmaku_delta",
+			DislikeDanmakuHashName: "dislike_danmaku_delta",
+			UserLikesDanmakuHash:   "user_likes_danmaku",
 		},
 	}
 	return c

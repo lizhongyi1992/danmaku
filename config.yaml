@@ -1,20 +1,4 @@
 listenat: :8888
-videoacc:
-  redisaddress: localhost:6379
-  redispassword: ""
-  redishashsetname: acc_views
-  redishashshufflesuffix: _inprogress
-  mysqladdress: localhost:3306
-  mysqluser: root
-  mysqlpassword: root
-  mysqldb: ""
-  mysqltable: test.tshare
-  mysqlfield: playtimes
-  mysqlkey: "no"
-  flushintervalsecond: 2
-  maxkeycached: 1000
-  writedbtimeout: 0
-  failretrytimes: 0
 syncer:
   mysqladdress: localhost:3306
   mysqluser: root
@@ -26,5 +10,6 @@ syncer:
   redisshufflesuffix: inprogress
   pubdanmakulistname: pub_danmaku_delta
   likedanmakuhashname: like_danmaku_delta
+  dislikedanmakuhashname: dislike_danmaku_delta
   userlikesdanmakuhash: user_likes_danmaku
 

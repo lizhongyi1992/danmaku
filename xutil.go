@@ -74,3 +74,11 @@ func ping_test(c *gin.Context) {
 func join_string_by(sep string, v ...string) string {
 	return strings.Join(v, sep)
 }
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	} else {
+		return b
+	}
+}
