@@ -277,9 +277,9 @@ func (p *App) danmaku_dislike(c *gin.Context) {
 
 	p.syncer_like_dislike.SyncRedis(func(conn redis.Conn) {
 		func() {
-			like_hash := p.config.Syncer.DislikeDanmakuHashName
+			dislike_hash := p.config.Syncer.DislikeDanmakuHashName
 			key := danmaku_id
-			_, e := conn.Do("hincrby", like_hash, key, 1)
+			_, e := conn.Do("hincrby", dislike_hash, key, 1)
 			if e != nil {
 				_err(e)
 			}
