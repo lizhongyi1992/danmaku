@@ -54,3 +54,29 @@ success: 200
 
 failure: 400
 
+
+## data structure explanation 
+
+```
+redis:
+
+(hash) like_danmaku_delta
+         key:danmaku_id value:count (int)
+
+(hash) dislike_danmaku_delta (hash)
+         key:danmaku_id value:count (int)
+
+(list) pub_danmaku_delta     
+         []json(danmaku)
+
+***_delta_inprogressing:  renamed by program for update mysql
+
+(hash) user_likes_danmaku
+         key:uid_videoid_danmakuid value: 0=None,1=like,2=dislike
+
+
+mysql:
+
+create table if not exists test.tdanmaku(id int not null auto_increment primary key, uid int,video_id int,type int, likes int, dislikes int, heat int,action int, offset int,date datetime ,nickname varchar(128),avatar text,comment text) default charset=utf8;
+
+```
