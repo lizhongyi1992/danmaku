@@ -16,8 +16,8 @@ import (
 type App struct {
 	config Config
 
-	syncer_pub  syncer.RedisMysqlSyncer
-	syncer_like syncer.RedisMysqlSyncer
+	syncer_pub          syncer.RedisMysqlSyncer
+	syncer_like_dislike syncer.RedisMysqlSyncer
 
 	datasource struct {
 		pool *redis.Pool
@@ -81,6 +81,17 @@ func NewApp(config Config) (*App, error) {
 			config.Syncer.FlushIntervalSecond,
 			app.insert_danmaku_to_mysql)
 
+	// like
+	app.syncer_like_dislike = syncer.NewRedisMysqlSyncer(syncer.RedisMysqlSyncerOption{})
+	e = app.syncer_like_dislike.Init(redis_connect, mysql_connect)
+	if e != nil {
+		return nil, e
+	}
+	app.syncer_like_dislike.
+		SetSyncMysqlHandle(
+			config.Syncer.FlushIntervalSecond,
+			app.update_danmaku_like_dislike_to_mysql)
+
 	return app, nil
 }
 
@@ -90,18 +101,18 @@ func (p *App) Run() {
 
 func (p *App) Stop() {
 	p.syncer_pub.Stop()
-	//p.syncer_like.Stop()
+	p.syncer_like_dislike.Stop()
 }
 
 func (p *App) WaitForExit() {
 	<-p.syncer_pub.StopChan()
-	//<-p.syncer_like.StopChan()
+	<-p.syncer_like_dislike.StopChan()
 }
 
 func (p *App) danmaku_all(c *gin.Context) {
 	var video_id, uid int
 	video_id, _ = strconv.Atoi(c.Query("video_id"))
-	uid, _ = strconv.Atoi(c.Query("uid"))
+	uid, _ = strconv.Atoi(c.Query("curr_uid"))
 	_dbg(video_id, uid, c.Request.URL.RawQuery)
 
 	table := p.config.Syncer.MysqlTable
@@ -138,6 +149,23 @@ func (p *App) danmaku_all(c *gin.Context) {
 			c.Status(400)
 			return
 		}
+
+		conn := p.datasource.pool.Get()
+		user_hash := p.config.Syncer.UserLikesDanmakuHash
+		key := join_string_by("_", fmt.Sprint(uid), fmt.Sprint(VideoID), fmt.Sprint(DanmakuID))
+		reply, e := conn.Do("hget", user_hash, key)
+		_err(key, reply, e)
+		if e == nil {
+			if action, ok := reply.([]byte); ok {
+				switch string(action) {
+				case "1":
+					Action = 1
+				case "2":
+					Action = 2
+				}
+			}
+		}
+
 		record := DanmakuRecord{
 			DanmakuID: DanmakuID,
 			VideoID:   VideoID,
@@ -178,7 +206,7 @@ func (p *App) danmaku_pub(c *gin.Context) {
 	comment, avatar, nickname = c.Query("comment"), c.Query("avatar"), c.Query("nickname")
 	video_id, _ = strconv.Atoi(c.Query("video_id"))
 	uid, _ = strconv.Atoi(c.Query("uid"))
-	type_, _ = strconv.Atoi(c.Query("type_"))
+	type_, _ = strconv.Atoi(c.Query("type"))
 	offset, _ = strconv.Atoi(c.Query("offset"))
 	date, e = strconv.ParseInt(c.Query("date"), 10, 64)
 	if e != nil {
@@ -204,22 +232,62 @@ func (p *App) danmaku_pub(c *gin.Context) {
 }
 
 func (p *App) danmaku_like(c *gin.Context) {
-	return
 	_log(c.Request.URL.RawQuery)
-	var like_hset_name string
 
 	video_id, uid, danmaku_id := c.Query("video_id"), c.Query("uid"), c.Query("danmaku_id")
-
-	key := join_string_by("_", video_id, uid, danmaku_id)
-	_, e := p.datasource.pool.Get().Do("hincrby", like_hset_name, key, 1)
-	if e != nil {
-		_err(e)
+	if video_id == "" || uid == "" || danmaku_id == "" {
+		c.Status(400)
 		return
 	}
+
+	p.syncer_like_dislike.SyncRedis(func(conn redis.Conn) {
+		func() {
+			like_hash := p.config.Syncer.LikeDanmakuHashName
+			key := danmaku_id
+			_, e := conn.Do("hincrby", like_hash, key, 1)
+			if e != nil {
+				_err(e)
+			}
+		}()
+
+		func() {
+			user_hash := p.config.Syncer.UserLikesDanmakuHash
+			key := join_string_by("_", uid, video_id, danmaku_id)
+			_, e := conn.Do("hset", user_hash, key, 1)
+			if e != nil {
+				_err(e)
+			}
+		}()
+	})
 }
 
 func (p *App) danmaku_dislike(c *gin.Context) {
-	p.syncer_like.SyncRedis(func(conn redis.Conn) {
+	_log(c.Request.URL.RawQuery)
+
+	video_id, uid, danmaku_id := c.Query("video_id"), c.Query("uid"), c.Query("danmaku_id")
+	if video_id == "" || uid == "" || danmaku_id == "" {
+		c.Status(400)
+		return
+	}
+
+	p.syncer_like_dislike.SyncRedis(func(conn redis.Conn) {
+		func() {
+			like_hash := p.config.Syncer.LikeDanmakuHashName
+			key := danmaku_id
+			_, e := conn.Do("hincrby", like_hash, key, -1) // *decr*
+			if e != nil {
+				_err(e)
+			}
+		}()
+
+		func() {
+			user_hash := p.config.Syncer.UserLikesDanmakuHash
+			key := join_string_by("_", uid, video_id, danmaku_id)
+			_, e := conn.Do("hset", user_hash, key, 2)
+			if e != nil {
+				_err(e)
+			}
+		}()
 	})
 }
 
@@ -298,4 +366,6 @@ func (p *App) insert_danmaku_to_mysql(conn redis.Conn, db *sql.DB) {
 	conn.Do("del", name)
 }
 
-// get video all
+// like / dislike
+func (p *App) update_danmaku_like_dislike_to_mysql(conn redis.Conn, db *sql.DB) {
+}

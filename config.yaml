@@ -24,5 +24,7 @@ syncer:
   redispassword: ""
   flushintervalsecond: 2
   redisshufflesuffix: inprogress
-  pubdanmakulistname: pub_danmaku
+  pubdanmakulistname: pub_danmaku_delta
+  likedanmakuhashname: like_danmaku_delta
+  userlikesdanmakuhash: user_likes_danmaku
 
