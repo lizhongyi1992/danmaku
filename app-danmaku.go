@@ -105,7 +105,7 @@ func (p *App) danmaku_all(c *gin.Context) {
 	_dbg(video_id, uid, c.Request.URL.RawQuery)
 
 	table := p.config.Syncer.MysqlTable
-	sqlstr := "select * from " + table + " where videoid=" + fmt.Sprint(video_id)
+	sqlstr := "select * from " + table + " where video_id=" + fmt.Sprint(video_id)
 	_dbg(sqlstr)
 	rows, e := p.datasource.db.Query(sqlstr)
 	if e != nil {
@@ -123,13 +123,15 @@ func (p *App) danmaku_all(c *gin.Context) {
 		var Avatar string
 		var Nickname string
 		var Type int
+		var Likes int
+		var Dislikes int
 		var Heat int
 		var Offset int
 		var Action int
 		var Date []byte
 		var Comment string
 
-		e := rows.Scan(&DanmakuID, &Userno, &VideoID, &Type, &Heat, &Action, &Offset, &Date, &Nickname, &Avatar, &Comment)
+		e := rows.Scan(&DanmakuID, &Userno, &VideoID, &Type, &Likes, &Dislikes, &Heat, &Action, &Offset, &Date, &Nickname, &Avatar, &Comment)
 		t, e := time.Parse("2006-01-02 15:04:05", string(Date))
 		if e != nil {
 			_err(e)
@@ -143,6 +145,8 @@ func (p *App) danmaku_all(c *gin.Context) {
 			Avatar:    Avatar,
 			Nickname:  Nickname,
 			Type:      Type,
+			Likes:     Likes,
+			Dislikes:  Dislikes,
 			Heat:      Heat,
 			Offset:    Offset,
 			Action:    Action,
@@ -215,7 +219,7 @@ func (p *App) danmaku_like(c *gin.Context) {
 }
 
 func (p *App) danmaku_dislike(c *gin.Context) {
-	p.syncer_dislike.SyncRedis(func(conn redis.Conn) {
+	p.syncer_like.SyncRedis(func(conn redis.Conn) {
 	})
 }
 
@@ -270,7 +274,7 @@ func (p *App) insert_danmaku_to_mysql(conn redis.Conn, db *sql.DB) {
 	if e != nil {
 		_err(e)
 	}
-	sqlstr := "insert into " + p.config.Syncer.MysqlTable + " (uid,videoid,type,heat,action,offset,date,nickname,avatar,comment) values (?,?,?,?,?,?,from_unixtime(?),?,?,?);"
+	sqlstr := "insert into " + p.config.Syncer.MysqlTable + " (uid,video_id,type,likes,dislikes,heat,action,offset,date,nickname,avatar,comment) values (?,?,?,0,0,?,?,?,from_unixtime(?),?,?,?);"
 	_dbg(sqlstr)
 	for _, v := range toupdate {
 		var r DanmakuRecord
@@ -279,6 +283,7 @@ func (p *App) insert_danmaku_to_mysql(conn redis.Conn, db *sql.DB) {
 			_err(e)
 			continue
 		}
+		_dbg(r)
 		_, e = tx.Exec(sqlstr, r.Userno, r.VideoID, r.Type, r.Heat, r.Action, r.Offset, r.Timestamp, r.Nickname, r.Avatar, r.Comment)
 		if e != nil {
 			_err(e)

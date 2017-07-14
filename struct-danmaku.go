@@ -7,9 +7,13 @@ type DanmakuRecord struct {
 	Avatar    string `json:"avatar"`
 	Nickname  string `json:"nickname"`
 	Type      int    `json:"type"`
+	Likes     int    `json:"likes"`
+	Dislikes  int    `json:"dislikes"`
 	Heat      int    `json:"heat"`
 	Offset    int    `json:"offset"`
 	Action    int    `json:"action"`
 	Timestamp int64  `json:"date"`
 	Comment   string `json:"comment"`
+	Ilike     int    `json:"ilike"`
+	Idislike  int    `json:"idislike"`
 }
