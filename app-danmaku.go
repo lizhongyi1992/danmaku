@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"time"
 
@@ -191,6 +192,9 @@ func (p *App) danmaku_all(c *gin.Context) {
 	_dbg(e, l)
 
 	// TODO:sort by heat
+	sort.Slice(l, func(i, j int) bool {
+		return l[i].Heat < l[j].Heat
+	})
 
 	b, e := json.Marshal(l)
 	if e != nil {
