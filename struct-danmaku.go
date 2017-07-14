@@ -14,6 +14,4 @@ type DanmakuRecord struct {
 	Action    int    `json:"action"`
 	Timestamp int64  `json:"date"`
 	Comment   string `json:"comment"`
-	Ilike     int    `json:"ilike"`
-	Idislike  int    `json:"idislike"`
 }

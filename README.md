@@ -18,6 +18,8 @@ Danmaku   Object
   "avatar": "String",                   // avatar url 
   "nickname": "String",                 // nickname
   "type": Int,                          // this field use by client side define
+  "likes": Int,                         // total likes count
+  "dislikes": Int,                      // total dislies count
   "heat": Int,                          // sort by heat, heat=max(like-dislike,0)
   "offset": Int,                        // offset from video begin(0s)
   "action": Int,                        // 0=None 1=like 2=dislike by current user
